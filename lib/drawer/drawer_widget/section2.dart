@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:learnify/ai/choose_carier/screen/tech_comparison_screen.dart';
 import 'package:learnify/ai/roadmap_generator/screens/roadmap_generator_screen.dart';
+
 import 'package:learnify/notes/notes_screen/notes_main_screen.dart';
 
 class Section2 extends StatelessWidget {
