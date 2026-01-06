@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "546277714389",
+    "project_id": "vaplearner",
+    "storage_bucket": "vaplearner.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:546277714389:android:a61264636bbda4e954755c",
+        "android_client_info": {
+          "package_name": "com.example.learnify"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "546277714389-rvup0t0oc0phq37tro7bqj833fjr7sfp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.learnify",
+            "certificate_hash": "cd0291e19149fdfb90c05f513b685dacfa1bc335"
+          }
+        },
+        {
+          "client_id": "546277714389-idtnfr6v6a0ml4qcnfevcv2k10gd72b8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMtAxHSDT1V5xWtCzK885pExPhB6XUfxI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "546277714389-gf212m31k3nb0jnf4t24kjjcln30c7k3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "546277714389-melt3h7m56g2esm3snfrk0inrt0l4dgv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.learnify"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
