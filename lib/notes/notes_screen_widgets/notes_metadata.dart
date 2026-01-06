@@ -123,7 +123,7 @@ class _NotesMetadataState extends State<NotesMetadata> {
                         'No tag added',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: Colors.white,
                           fontSize: 18,
                         ),
                       )

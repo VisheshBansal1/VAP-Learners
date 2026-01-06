@@ -348,7 +348,7 @@ class _TechComparisonScreenState extends State<TechComparisonScreen> {
       child: RichText(
         text: TextSpan(
           style:
-              const TextStyle(color: Colors.black, height: 1.4),
+              const TextStyle(color: Colors.white, height: 1.4),
           children: [
             TextSpan(
               text: '$title: ',

@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -28,17 +27,18 @@ class _NotesMainScreenState extends State<NotesMainScreen> {
   bool isDecending = true;
   bool isGrid = true;
 
-  Future<void> _logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    // AuthGate will handle navigation automatically
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+        ),
         title: Text(
           'Notes Noter📝',
           style: TextStyle(
@@ -47,12 +47,6 @@ class _NotesMainScreenState extends State<NotesMainScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () => _logout(context),
-            icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
-          ),
-        ],
       ),
       floatingActionButton: MyFloatingActionButton(
         onPressed: () {
@@ -77,15 +71,13 @@ class _NotesMainScreenState extends State<NotesMainScreen> {
               ? Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      'assets/images/no_notes_here.avif',
-                      height: 370,
-                    ),
+                    Image.asset('assets/images/image.png', height: 370),
                     const Text(
                       'No notes yet',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Colors.black
                       ),
                     ),
                   ],
