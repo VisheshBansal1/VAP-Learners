@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:learnify/ai/choose_carier/screen/tech_comparison_screen.dart';
 import 'package:learnify/ai/roadmap_generator/screens/roadmap_generator_screen.dart';
+import 'package:learnify/notes/ai_notes/notes_generator/notes_home_screen.dart';
 
 import 'package:learnify/notes/notes_screen/notes_main_screen.dart';
 
@@ -12,6 +13,19 @@ class Section2 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        ListTile(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return const NotesHomeScreen();
+              },
+            ),
+          ),
+          leading: Icon(CupertinoIcons.book),
+          title: Text('AI Notes'),
+          trailing: Icon(Icons.arrow_forward_ios_rounded),
+        ),
         ListTile(
           onTap: () => Navigator.push(
             context,

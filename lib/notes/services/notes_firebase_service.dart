@@ -20,16 +20,20 @@ class NotesFirebaseService {
           .doc(uid)
           .collection('notes');
 
-  // ================= READ =================
+  // ================= READ (REAL-TIME) =================
 
-  Future<List<Note>> fetchNotes() async {
-    final snapshot = await _notesRef.get();
-    return snapshot.docs.map((doc) {
-      return Note.fromJson(
-        doc.data(),
-        doc.id,
-      );
-    }).toList();
+  Stream<List<Note>> fetchNotes() {
+    return _notesRef
+        .orderBy('dateModified', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return Note.fromJson(
+              doc.data(),
+              doc.id,
+            );
+          }).toList();
+        });
   }
 
   // ================= CREATE =================
@@ -41,7 +45,7 @@ class NotesFirebaseService {
   // ================= UPDATE =================
 
   Future<void> updateNote(Note note) async {
-    if (note.id == null) {
+    if (note.id.isEmpty) {
       throw Exception('Cannot update note without id');
     }
 
@@ -50,8 +54,7 @@ class NotesFirebaseService {
 
   // ================= DELETE =================
 
-  Future<void> deleteNote(String? id) async {
-    if (id == null) return;
+  Future<void> deleteNote(String id) async {
     await _notesRef.doc(id).delete();
   }
 }

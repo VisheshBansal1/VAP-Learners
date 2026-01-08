@@ -9,86 +9,47 @@ import 'package:learnify/notes/notes_screen_widgets/note_tag.dart';
 import 'package:provider/provider.dart';
 
 class NotesMetadata extends StatefulWidget {
-  const NotesMetadata({super.key, required this.note});
+  const NotesMetadata({
+    super.key,
+    required this.note,
+  });
 
   final Note? note;
+
   @override
   State<NotesMetadata> createState() => _NotesMetadataState();
 }
 
 class _NotesMetadataState extends State<NotesMetadata> {
-  late final NewNoteController newNoteController;
+  late final NewNoteController _controller;
 
   @override
   void initState() {
     super.initState();
-
-    newNoteController = context.read();
+    _controller = context.read<NewNoteController>();
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ---------- DATE INFO ----------
         if (widget.note != null) ...[
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Text(
-                  'Last Modified',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 5,
-                child: Text(
-                  toLongDate(widget.note!.dateModified),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Text(
-                  'Created',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 5,
-                child: Text(
-                  toLongDate(widget.note!.dateCreated),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _dateRow('Last Modified', widget.note!.dateModified),
+          const SizedBox(height: 4),
+          _dateRow('Created', widget.note!.dateCreated),
+          const SizedBox(height: 8),
         ],
 
+        // ---------- TAGS ----------
         Row(
           children: [
             Expanded(
               flex: 3,
               child: Row(
                 children: [
-                  Text(
+                  const Text(
                     'Tags',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -96,18 +57,22 @@ class _NotesMetadataState extends State<NotesMetadata> {
                     ),
                   ),
                   IconButton(
+                    icon: const FaIcon(
+                      FontAwesomeIcons.circlePlus,
+                      size: 16,
+                    ),
                     onPressed: () async {
-                      final String? tag = await showDialog<String?>(
+                      final String? tag =
+                          await showDialog<String?>(
                         context: context,
-                        builder: (context) {
-                          return const DialogCard(child: NewTagDialog());
-                        },
+                        builder: (_) =>
+                            const DialogCard(child: NewTagDialog()),
                       );
-                      if (tag != null) {
-                        newNoteController.addTags(tag);
+
+                      if (tag != null && tag.trim().isNotEmpty) {
+                        _controller.addTag(tag.trim());
                       }
                     },
-                    icon: FaIcon(FontAwesomeIcons.circlePlus, size: 16),
                   ),
                 ],
               ),
@@ -115,35 +80,66 @@ class _NotesMetadataState extends State<NotesMetadata> {
             Expanded(
               flex: 5,
               child: Selector<NewNoteController, List<String>>(
-                selector: (_, newNoteController) {
-                  return newNoteController.tags;
-                },
-                builder: (_, tags, __) => tags.isEmpty
-                    ? Text(
-                        'No tag added',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontSize: 18,
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: List.generate(
-                            tags.length,
-                            (index) => NoteTag(
-                              label: tags[index],
-                              onClosed: () {
-                                newNoteController.removeTag(index);
-                              },
-                            ),
-                          ),
+                selector: (_, ctrl) => ctrl.tags,
+                builder: (_, tags, __) {
+                  if (tags.isEmpty) {
+                    return const Text(
+                      'No tag added',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(
+                        tags.length,
+                        (index) => NoteTag(
+                          label: tags[index],
+                          onClosed: () {
+                            _controller.removeTag(index);
+                          },
                         ),
                       ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  // ================= HELPERS =================
+
+  Widget _dateRow(String label, int timestamp) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 5,
+          child: Text(
+            toLongDate(timestamp),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
         ),
       ],
     );

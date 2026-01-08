@@ -9,17 +9,23 @@ import 'package:provider/provider.dart';
 class NewNoteController extends ChangeNotifier {
   Note? _note;
 
+  // ================= INIT NOTE =================
+
   set note(Note? value) {
     _note = value;
-    if (_note == null) return;
 
-    _title = _note!.title ?? '';
-    _content = Document.fromJson(
-      jsonDecode(_note!.contentJson),
-    );
+    if (_note == null) {
+      _title = '';
+      _content = Document();
+      _tags.clear();
+      return;
+    }
+
+    _title = _note!.title;
+    _content = _decodeContent(_note!.contentJson);
     _tags
       ..clear()
-      ..addAll(_note!.tags ?? []);
+      ..addAll(_note!.tags);
 
     notifyListeners();
   }
@@ -29,67 +35,59 @@ class NewNoteController extends ChangeNotifier {
   // ================= READ ONLY =================
 
   bool _readOnly = false;
+  bool get readOnly => _readOnly;
+
   set readOnly(bool value) {
     _readOnly = value;
     notifyListeners();
   }
 
-  bool get readOnly => _readOnly;
-
   // ================= TITLE =================
 
   String _title = '';
+  String get title => _title.trim();
+
   set title(String value) {
     _title = value;
     notifyListeners();
   }
 
-  String get title => _title.trim();
-
   // ================= CONTENT =================
 
   Document _content = Document();
+  Document get content => _content;
+
   set content(Document value) {
     _content = value;
     notifyListeners();
   }
 
-  Document get content => _content;
-
   // ================= TAGS =================
 
   final List<String> _tags = [];
+  List<String> get tags => List.unmodifiable(_tags);
 
-  void addTags(String tag) {
-    _tags.add(tag);
+  void addTag(String tag) {
+    if (tag.trim().isEmpty) return;
+    _tags.add(tag.trim());
     notifyListeners();
   }
 
-  List<String> get tags => [..._tags];
-
   void removeTag(int index) {
+    if (index < 0 || index >= _tags.length) return;
     _tags.removeAt(index);
     notifyListeners();
   }
 
   // ================= SAVE =================
 
-  void saveNote(BuildContext context) {
-    final String? newTitle = title.isNotEmpty ? title : null;
-    final String? newContent = content.toPlainText().trim().isNotEmpty
-        ? content.toPlainText().trim()
-        : null;
-
-    final String contentJson =
-        jsonEncode(_content.toDelta().toJson());
-
-    final int now = DateTime.now().microsecondsSinceEpoch;
+  Future<void> saveNote(BuildContext context) async {
+    final int now = DateTime.now().millisecondsSinceEpoch;
 
     final Note newNote = Note(
-      id: _note?.id, // 🔴 CRITICAL: preserve Firestore id
-      title: newTitle,
-      content: newContent,
-      contentJson: contentJson,
+      id: _note?.id ?? '', // empty → Firestore will create
+      title: title,
+      contentJson: _encodeContent(_content),
       dateCreated: isNewNote ? now : _note!.dateCreated,
       dateModified: now,
       tags: tags,
@@ -98,9 +96,9 @@ class NewNoteController extends ChangeNotifier {
     final notesProvider = context.read<NotesProvider>();
 
     if (isNewNote) {
-      notesProvider.addNote(newNote);
+      await notesProvider.addNote(newNote);
     } else {
-      notesProvider.updateNote(newNote);
+      await notesProvider.updateNote(newNote);
     }
   }
 
@@ -109,24 +107,30 @@ class NewNoteController extends ChangeNotifier {
   bool get isNewNote => _note == null;
 
   bool get canSaveNote {
-    final String? newTitle = title.isNotEmpty ? title : null;
-    final String? newContent = content.toPlainText().trim().isNotEmpty
-        ? content.toPlainText().trim()
-        : null;
-
-    bool canSave = newTitle != null || newContent != null;
-
-    final newContentJson =
-        jsonEncode(content.toDelta().toJson());
-
-    if (!isNewNote) {
-      canSave =
-          canSave &&
-          (newTitle != note!.title ||
-              newContentJson != note!.contentJson ||
-              !listEquals(tags, note!.tags));
+    if (title.isEmpty && _content.toPlainText().trim().isEmpty) {
+      return false;
     }
 
-    return canSave;
+    if (isNewNote) return true;
+
+    final String newContentJson = _encodeContent(_content);
+
+    return title != _note!.title ||
+        newContentJson != _note!.contentJson ||
+        !listEquals(tags, _note!.tags);
+  }
+
+  // ================= UTILS =================
+
+  Document _decodeContent(String json) {
+    try {
+      return Document.fromJson(jsonDecode(json));
+    } catch (_) {
+      return Document();
+    }
+  }
+
+  String _encodeContent(Document doc) {
+    return jsonEncode(doc.toDelta().toJson());
   }
 }

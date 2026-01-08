@@ -32,11 +32,13 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        // ================= VAP =================
+        // ================= THEME =================
         ChangeNotifierProvider.value(value: themeController),
 
-        // ================= NOTES =================
+        // ================= NOTES (REAL-TIME) =================
         ChangeNotifierProvider(create: (_) => NotesProvider()),
+
+        // ================= AUTH =================
         ChangeNotifierProvider(create: (_) => RegistrationController()),
       ],
       child: const MyApp(),
@@ -58,9 +60,7 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: theme.themeMode,
-
         home: const AuthWrapper(),
-
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
@@ -95,17 +95,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (user != null) {
       try {
         await user.reload();
-        final refreshedUser = FirebaseAuth.instance.currentUser;
-
         setState(() {
-          _user = refreshedUser;
+          _user = FirebaseAuth.instance.currentUser;
           _checking = false;
         });
-
-        // 🔹 preload notes silently
-        if (refreshedUser != null) {
-          context.read<NotesProvider>().loadNotes();
-        }
       } catch (_) {
         await FirebaseAuth.instance.signOut();
         setState(() {
@@ -131,10 +124,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
     }
 
     if (_user != null) {
-      // 🔹 VAP Home (UNCHANGED)
+      // 🔹 VAP Home
       return const HomeScreen();
     } else {
-      // 🔹 VAP Onboarding (UNCHANGED)
+      // 🔹 VAP Onboarding
       return OnboardingWrapper();
     }
   }
