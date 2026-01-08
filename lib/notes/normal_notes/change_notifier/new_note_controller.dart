@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:learnify/notes/change_notifier/notes_provider.dart';
-import 'package:learnify/notes/models/note.dart';
+import 'package:learnify/notes/normal_notes/change_notifier/notes_provider.dart';
+import 'package:learnify/notes/normal_notes/models/note.dart';
 import 'package:provider/provider.dart';
 
 class NewNoteController extends ChangeNotifier {

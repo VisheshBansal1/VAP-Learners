@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:learnify/notes/change_notifier/notes_provider.dart';
+import 'package:learnify/notes/normal_notes/change_notifier/notes_provider.dart';
 import 'package:provider/provider.dart';
 
 class SearchField extends StatefulWidget {

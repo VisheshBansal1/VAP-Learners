@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:learnify/notes/models/note.dart';
-import 'package:learnify/notes/notes_screen_widgets/note_card.dart';
+import 'package:learnify/notes/normal_notes/models/note.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/note_card.dart';
 
 class NotesList extends StatelessWidget {
   const NotesList({super.key, required this.notes});

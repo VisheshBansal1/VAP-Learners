@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:learnify/notes/change_notifier/new_note_controller.dart';
-import 'package:learnify/notes/core/utils.dart';
-import 'package:learnify/notes/models/note.dart';
-import 'package:learnify/notes/notes_screen_widgets/dialog_card.dart';
-import 'package:learnify/notes/notes_screen_widgets/new_tag_dialog.dart';
-import 'package:learnify/notes/notes_screen_widgets/note_tag.dart';
+import 'package:learnify/notes/normal_notes/change_notifier/new_note_controller.dart';
+import 'package:learnify/notes/normal_notes/core/utils.dart';
+import 'package:learnify/notes/normal_notes/models/note.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/dialog_card.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/new_tag_dialog.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/note_tag.dart';
 import 'package:provider/provider.dart';
 
 class NotesMetadata extends StatefulWidget {

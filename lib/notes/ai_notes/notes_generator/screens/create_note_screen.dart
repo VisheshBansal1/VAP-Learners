@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:learnify/notes/ai_notes/notes_generator/model/note.dart';
+import 'package:uuid/uuid.dart';
+
 
 class CreateNoteScreen extends StatefulWidget {
   const CreateNoteScreen({super.key});
@@ -10,38 +13,72 @@ class CreateNoteScreen extends StatefulWidget {
 }
 
 class _CreateNoteScreenState extends State<CreateNoteScreen> {
-  final titleCtrl = TextEditingController();
+  final TextEditingController titleCtrl = TextEditingController();
+  bool isSaving = false;
 
   Future<void> createNote() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final title = titleCtrl.text.trim();
+    if (title.isEmpty || isSaving) return;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('notes')
-        .add({
-      'title': titleCtrl.text.trim(),
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    setState(() => isSaving = true);
 
-    Navigator.pop(context);
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      final notesBox = Hive.box<Note>('notesBox');
+
+      final note = Note(
+        id: const Uuid().v4(),
+        userId: uid,
+        title: title,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        isSynced: false,
+      );
+
+      await notesBox.put(note.id, note);
+      Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => isSaving = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    titleCtrl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("New Note")),
+      appBar: AppBar(title: const Text('New Note')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
               controller: titleCtrl,
-              decoration: const InputDecoration(hintText: "Note name"),
+              textInputAction: TextInputAction.done,
+              decoration: const InputDecoration(
+                hintText: 'Note title',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => createNote(),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: createNote, child: const Text("Create", style: TextStyle(),)),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isSaving ? null : createNote,
+                child: isSaving
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Create'),
+              ),
+            ),
           ],
         ),
       ),

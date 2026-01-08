@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:learnify/notes/notes_screen_widgets/note_button.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/note_button.dart';
 
 class ConfirmationDialog extends StatelessWidget {
   const ConfirmationDialog({super.key});

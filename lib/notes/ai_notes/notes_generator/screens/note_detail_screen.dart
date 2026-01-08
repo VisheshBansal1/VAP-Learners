@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/note_section.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/notes_api.dart';
-import '../services/notes_firestore_service.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:learnify/notes/ai_notes/notes_generator/model/note.dart';
+import 'package:learnify/notes/ai_notes/notes_generator/model/note_section_model.dart';
+import 'package:learnify/notes/ai_notes/notes_generator/api/notes_api.dart';
+import 'package:uuid/uuid.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
-  final String noteTitle;
 
-  const NoteDetailScreen({
-    super.key,
-    required this.noteId,
-    required this.noteTitle,
-  });
+  const NoteDetailScreen({super.key, required this.noteId});
 
   @override
   State<NoteDetailScreen> createState() => _NoteDetailScreenState();
@@ -22,7 +19,15 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   bool loading = false;
   String? error;
 
-  // ================= GENERATE AI SECTION =================
+  late Box<Note> notesBox;
+  late Box<NoteSection> sectionsBox;
+
+  @override
+  void initState() {
+    super.initState();
+    notesBox = Hive.box<Note>('notesBox');
+    sectionsBox = Hive.box<NoteSection>('sectionsBox');
+  }
 
   Future<void> generateSection() async {
     final topic = topicCtrl.text.trim();
@@ -34,31 +39,49 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     });
 
     try {
-      // 1️⃣ Call backend → AI text
       final content = await NotesApi.generateSection(topic);
 
-      // 2️⃣ Persist via Firestore service
-      await NotesFirestoreService.addSection(
+      final section = NoteSection(
+        id: const Uuid().v4(),
         noteId: widget.noteId,
         topic: topic,
         content: content,
+        createdAt: DateTime.now(),
+        isSynced: false,
       );
+
+      await sectionsBox.put(section.id, section);
+
+      final note = notesBox.get(widget.noteId);
+      if (note != null) {
+        note
+          ..updatedAt = DateTime.now()
+          ..isSynced = false;
+        await note.save();
+      }
 
       topicCtrl.clear();
     } catch (e) {
       setState(() => error = e.toString());
     } finally {
-      setState(() => loading = false);
+      if (mounted) setState(() => loading = false);
     }
   }
 
   @override
+  void dispose() {
+    topicCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final note = notesBox.get(widget.noteId);
+
     return Scaffold(
-      appBar: AppBar(title: Text(widget.noteTitle)),
+      appBar: AppBar(title: Text(note?.title ?? 'Note')),
       body: Column(
         children: [
-          // ================= INPUT BAR =================
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -67,7 +90,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   child: TextField(
                     controller: topicCtrl,
                     decoration: const InputDecoration(
-                      hintText: "Enter topic (e.g. Widgets)",
+                      hintText: 'Enter topic',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -81,53 +104,40 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           width: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text("Generate"),
+                      : const Text('Generate'),
                 ),
               ],
             ),
           ),
-
           if (error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                error!,
-                style: const TextStyle(color: Colors.red),
-              ),
+              padding: const EdgeInsets.all(12),
+              child: Text(error!, style: const TextStyle(color: Colors.red)),
             ),
-
-          // ================= SECTIONS LIST =================
           Expanded(
-            child: StreamBuilder<List<NoteSection>>(
-              stream:
-                  NotesFirestoreService.sectionsStream(widget.noteId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(
-                      child: CircularProgressIndicator());
-                }
+            child: ValueListenableBuilder(
+              valueListenable: sectionsBox.listenable(),
+              builder: (context, Box<NoteSection> box, _) {
+                final sections = box.values
+                    .where((s) => s.noteId == widget.noteId)
+                    .toList()
+                  ..sort(
+                      (a, b) => b.createdAt.compareTo(a.createdAt));
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text("No sections yet"),
-                  );
+                if (sections.isEmpty) {
+                  return const Center(child: Text('No sections yet'));
                 }
-
-                final sections = snapshot.data!;
 
                 return ListView.builder(
                   itemCount: sections.length,
-                  itemBuilder: (context, index) {
+                  itemBuilder: (_, index) {
                     final section = sections[index];
-
                     return Card(
                       margin: const EdgeInsets.all(10),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               section.topic,

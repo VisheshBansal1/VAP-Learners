@@ -2,15 +2,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/notes/change_notifier/new_note_controller.dart';
-import 'package:learnify/notes/change_notifier/notes_provider.dart';
-import 'package:learnify/notes/models/note.dart';
-import 'package:learnify/notes/notes_screen/new_or_edit_note_screen.dart';
-import 'package:learnify/notes/notes_screen_widgets/my_floating_action_button.dart';
-import 'package:learnify/notes/notes_screen_widgets/notes_grid.dart';
-import 'package:learnify/notes/notes_screen_widgets/notes_list.dart';
-import 'package:learnify/notes/notes_screen_widgets/seach_field.dart';
-import 'package:learnify/notes/notes_screen_widgets/view_options.dart';
+import 'package:learnify/notes/normal_notes/change_notifier/new_note_controller.dart';
+import 'package:learnify/notes/normal_notes/change_notifier/notes_provider.dart';
+import 'package:learnify/notes/normal_notes/models/note.dart';
+import 'package:learnify/notes/normal_notes/notes_screen/new_or_edit_note_screen.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/my_floating_action_button.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/notes_grid.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/notes_list.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/seach_field.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/view_options.dart';
 import 'package:provider/provider.dart';
 
 class NotesMainScreen extends StatefulWidget {

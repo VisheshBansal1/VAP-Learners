@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:learnify/notes/core/extension.dart';
-import 'package:learnify/notes/enums/order_option.dart';
-import 'package:learnify/notes/models/note.dart';
+import 'package:learnify/notes/normal_notes/core/extension.dart';
+import 'package:learnify/notes/normal_notes/enums/order_option.dart';
+import 'package:learnify/notes/normal_notes/models/note.dart';
 import '../services/notes_firebase_service.dart';
 
 class NotesProvider extends ChangeNotifier {

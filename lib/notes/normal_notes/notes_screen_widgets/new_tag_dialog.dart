@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/notes/notes_screen_widgets/note_button.dart';
-import 'package:learnify/notes/notes_screen_widgets/note_form_field.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/note_button.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/note_form_field.dart';
 
 class NewTagDialog extends StatefulWidget {
   const NewTagDialog({super.key});
