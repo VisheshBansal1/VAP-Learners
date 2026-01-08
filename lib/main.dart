@@ -3,58 +3,79 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/model/note.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/model/note_section_model.dart';
-import 'package:learnify/notes/normal_notes/change_notifier/registration_controller.dart';
+import 'package:learnify/notes/normal_notes/models/note_section.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-// ================= APP =================
+// ================= FIREBASE =================
 import 'firebase_options.dart';
+
+// ================= THEME =================
 import 'theme/theme_controller.dart';
 import 'theme/app_theme.dart';
+
+// ================= SCREENS =================
 import 'screens/dashboard/dashboard.dart';
 import 'splash_screen/onboarding_wrapper.dart';
 
 // ================= NOTES =================
-import 'notes/normal_notes/models/note.dart' hide Note;
+import 'notes/normal_notes/models/note.dart';
+import 'notes/ai_notes/notes_generator/model/ai_note.dart';
+import 'notes/ai_notes/notes_generator/model/ai_note_section.dart';
+import 'notes/normal_notes/change_notifier/notes_provider.dart';
 
+// ================= AUTH =================
+import 'notes/normal_notes/change_notifier/registration_controller.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ---------------- ENV ----------------
   await dotenv.load(fileName: ".env");
 
-  // 🔹 Firebase (Auth + Sync only)
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // ---------------- FIREBASE ----------------
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // 🔹 Hive init
+  // ---------------- HIVE ----------------
   await Hive.initFlutter();
 
-  // 🔹 Register adapters (NON-NEGOTIABLE)
-  Hive.registerAdapter(NoteAdapter());
-  Hive.registerAdapter(NoteSectionAdapter());
+  // ✅ REGISTER ADAPTERS (TYPE IDs MUST NEVER CHANGE)
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(NoteAdapter()); // Normal notes
+  }
 
-  // 🔹 Open boxes (BEFORE runApp)
+  if (!Hive.isAdapterRegistered(1)) {
+    Hive.registerAdapter(AiNoteAdapter()); // AI notes
+  }
+
+  if (!Hive.isAdapterRegistered(2)) {
+    Hive.registerAdapter(AiNoteSectionAdapter()); // AI sections
+  }
+
+  if (!Hive.isAdapterRegistered(3)) {
+    Hive.registerAdapter(NoteSectionAdapter()); // Normal sections
+  }
+
+  // ✅ OPEN ALL REQUIRED BOXES (ONCE)
   await Hive.openBox<Note>('notesBox');
-  await Hive.openBox<NoteSection>('sectionsBox');
+  await Hive.openBox<AiNote>('aiNotesBox');
+  await Hive.openBox<AiNoteSection>('sectionsBox'); // AI sections
+  await Hive.openBox<NoteSection>('noteSectionsBox'); // Normal sections
 
-  // 🔹 Theme
+  // ---------------- THEME ----------------
   final themeController = ThemeController();
   await themeController.init();
 
+  // ---------------- APP ----------------
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: themeController),
 
-        // ❌ REMOVE NotesProvider (Firestore-based)
-        // ChangeNotifierProvider(create: (_) => NotesProvider()),
-
+        // ⚠️ Providers must NEVER open boxes
+        ChangeNotifierProvider(create: (_) => NotesProvider()),
         ChangeNotifierProvider(create: (_) => RegistrationController()),
       ],
       child: const MyApp(),
@@ -88,6 +109,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// ================= AUTH WRAPPER =================
+
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -106,27 +129,22 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<void> _verifyUser() async {
-    final user = FirebaseAuth.instance.currentUser;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
 
-    if (user != null) {
-      try {
+      if (user != null) {
         await user.reload();
-        setState(() {
-          _user = FirebaseAuth.instance.currentUser;
-          _checking = false;
-        });
-      } catch (_) {
-        await FirebaseAuth.instance.signOut();
-        setState(() {
-          _user = null;
-          _checking = false;
-        });
-      }
-    } else {
-      setState(() {
+        _user = FirebaseAuth.instance.currentUser;
+      } else {
         _user = null;
-        _checking = false;
-      });
+      }
+    } catch (_) {
+      await FirebaseAuth.instance.signOut();
+      _user = null;
+    } finally {
+      if (mounted) {
+        setState(() => _checking = false);
+      }
     }
   }
 
@@ -135,14 +153,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (_checking) {
       return const Scaffold(
         backgroundColor: Color(0xFF151022),
-        body: Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 
-    return _user != null
-        ? const HomeScreen()
-        : OnboardingWrapper();
+    return _user != null ? const HomeScreen() : OnboardingWrapper();
   }
 }

@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:learnify/notes/normal_notes/change_notifier/notes_provider.dart';
-import 'package:learnify/notes/normal_notes/models/note.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../change_notifier/notes_provider.dart';
+import '../models/note.dart';
 
 class NewNoteController extends ChangeNotifier {
   Note? _note;
@@ -18,6 +21,7 @@ class NewNoteController extends ChangeNotifier {
       _title = '';
       _content = Document();
       _tags.clear();
+      notifyListeners();
       return;
     }
 
@@ -68,8 +72,9 @@ class NewNoteController extends ChangeNotifier {
   List<String> get tags => List.unmodifiable(_tags);
 
   void addTag(String tag) {
-    if (tag.trim().isEmpty) return;
-    _tags.add(tag.trim());
+    final t = tag.trim();
+    if (t.isEmpty || _tags.contains(t)) return;
+    _tags.add(t);
     notifyListeners();
   }
 
@@ -82,24 +87,62 @@ class NewNoteController extends ChangeNotifier {
   // ================= SAVE =================
 
   Future<void> saveNote(BuildContext context) async {
-    final int now = DateTime.now().millisecondsSinceEpoch;
+    if (!canSaveNote) return;
 
-    final Note newNote = Note(
-      id: _note?.id ?? '', // empty → Firestore will create
-      title: title,
-      contentJson: _encodeContent(_content),
-      dateCreated: isNewNote ? now : _note!.dateCreated,
-      dateModified: now,
-      tags: tags,
-    );
+    final now = DateTime.now();
+    final notesProvider = context.read<NotesProvider>();
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+
+    final contentJson = _encodeContent(_content);
+
+    if (isNewNote) {
+      final newNote = Note(
+        id: const Uuid().v4(),
+        userId: user.uid,
+        title: title,
+        contentJson: contentJson,
+        createdAt: now,
+        updatedAt: now,
+        tags: tags,
+        isSynced: false,
+        isDeleted: false,
+      );
+
+      await notesProvider.addNote(newNote);
+      _note = newNote;
+    } else {
+      final updated = _note!.copyWith(
+        title: title,
+        contentJson: contentJson,
+        updatedAt: now,
+        tags: tags,
+        isSynced: false,
+      );
+
+      await notesProvider.updateNote(updated);
+      _note = updated;
+    }
+
+    notifyListeners();
+  }
+
+  // ================= DELETE =================
+
+  Future<void> deleteNote(BuildContext context) async {
+    if (_note == null) return;
 
     final notesProvider = context.read<NotesProvider>();
 
-    if (isNewNote) {
-      await notesProvider.addNote(newNote);
-    } else {
-      await notesProvider.updateNote(newNote);
-    }
+    _note!
+      ..isDeleted = true
+      ..isSynced = false;
+
+    await notesProvider.updateNote(_note!);
+    notifyListeners();
   }
 
   // ================= HELPERS =================
@@ -113,7 +156,7 @@ class NewNoteController extends ChangeNotifier {
 
     if (isNewNote) return true;
 
-    final String newContentJson = _encodeContent(_content);
+    final newContentJson = _encodeContent(_content);
 
     return title != _note!.title ||
         newContentJson != _note!.contentJson ||
@@ -124,8 +167,13 @@ class NewNoteController extends ChangeNotifier {
 
   Document _decodeContent(String json) {
     try {
-      return Document.fromJson(jsonDecode(json));
+      final decoded = jsonDecode(json);
+      if (decoded is List) {
+        return Document.fromJson(decoded);
+      }
+      return Document();
     } catch (_) {
+      // corrupted content → reset safely
       return Document();
     }
   }

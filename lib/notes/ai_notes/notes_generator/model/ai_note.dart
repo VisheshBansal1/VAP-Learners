@@ -1,9 +1,10 @@
 import 'package:hive/hive.dart';
 
-part 'note.g.dart';
+part 'ai_note.g.dart';
 
-@HiveType(typeId: 0)
-class Note extends HiveObject {
+@HiveType(typeId: 1)
+class AiNote extends HiveObject {
+  /// Firestore document ID
   @HiveField(0)
   String id;
 
@@ -19,15 +20,20 @@ class Note extends HiveObject {
   @HiveField(4)
   DateTime updatedAt;
 
+  /// Sync flags
   @HiveField(5)
   bool isSynced;
 
-  Note({
+  @HiveField(6)
+  bool isDeleted; // ⭐ VERY IMPORTANT for sync
+
+  AiNote({
     required this.id,
     required this.userId,
     required this.title,
     required this.createdAt,
     required this.updatedAt,
     this.isSynced = false,
+    this.isDeleted = false,
   });
 }

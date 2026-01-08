@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/model/note.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/model/note_section_model.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/api/notes_api.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:learnify/notes/ai_notes/notes_generator/model/ai_note.dart';
+import 'package:learnify/notes/ai_notes/notes_generator/model/ai_note_section.dart';
+import 'package:learnify/notes/ai_notes/notes_generator/api/notes_api.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -15,71 +16,106 @@ class NoteDetailScreen extends StatefulWidget {
 }
 
 class _NoteDetailScreenState extends State<NoteDetailScreen> {
-  final TextEditingController topicCtrl = TextEditingController();
-  bool loading = false;
-  String? error;
+  final TextEditingController _topicCtrl = TextEditingController();
+  bool _loading = false;
+  String? _error;
 
-  late Box<Note> notesBox;
-  late Box<NoteSection> sectionsBox;
+  late final Box<AiNote> _aiNotesBox;
+  late final Box<AiNoteSection> _sectionsBox;
 
   @override
   void initState() {
     super.initState();
-    notesBox = Hive.box<Note>('notesBox');
-    sectionsBox = Hive.box<NoteSection>('sectionsBox');
+    _aiNotesBox = Hive.box<AiNote>('aiNotesBox');
+    _sectionsBox = Hive.box<AiNoteSection>('sectionsBox'); // ✅ AI sections
   }
 
-  Future<void> generateSection() async {
-    final topic = topicCtrl.text.trim();
-    if (topic.isEmpty || loading) return;
+  Future<void> _generateSection() async {
+    if (_loading) return;
+
+    final topic = _topicCtrl.text.trim();
+    if (topic.isEmpty) return;
+
+    final aiNote = _aiNotesBox.get(widget.noteId);
+    if (aiNote == null || aiNote.isDeleted) {
+      setState(() {
+        _error = 'This AI note no longer exists.';
+      });
+      return;
+    }
 
     setState(() {
-      loading = true;
-      error = null;
+      _loading = true;
+      _error = null;
     });
 
     try {
       final content = await NotesApi.generateSection(topic);
 
-      final section = NoteSection(
+      if (content.trim().isEmpty) {
+        throw Exception('Empty AI response');
+      }
+
+      final section = AiNoteSection(
         id: const Uuid().v4(),
         noteId: widget.noteId,
         topic: topic,
         content: content,
         createdAt: DateTime.now(),
         isSynced: false,
+        isDeleted: false,
       );
 
-      await sectionsBox.put(section.id, section);
+      await _sectionsBox.put(section.id, section);
 
-      final note = notesBox.get(widget.noteId);
-      if (note != null) {
-        note
-          ..updatedAt = DateTime.now()
-          ..isSynced = false;
-        await note.save();
-      }
+      aiNote
+        ..updatedAt = DateTime.now()
+        ..isSynced = false;
+      await aiNote.save();
 
-      topicCtrl.clear();
+      _topicCtrl.clear();
     } catch (e) {
-      setState(() => error = e.toString());
+      setState(() {
+        _error = 'Failed to generate section. Try again.';
+      });
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _deleteSection(AiNoteSection section) async {
+    section
+      ..isDeleted = true
+      ..isSynced = false;
+    await section.save();
+
+    final aiNote = _aiNotesBox.get(widget.noteId);
+    if (aiNote != null) {
+      aiNote
+        ..updatedAt = DateTime.now()
+        ..isSynced = false;
+      await aiNote.save();
     }
   }
 
   @override
   void dispose() {
-    topicCtrl.dispose();
+    _topicCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final note = notesBox.get(widget.noteId);
+    final aiNote = _aiNotesBox.get(widget.noteId);
+
+    if (aiNote == null || aiNote.isDeleted) {
+      return const Scaffold(
+        body: Center(child: Text('AI note not found')),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(title: Text(note?.title ?? 'Note')),
+      appBar: AppBar(title: Text(aiNote.title)),
       body: Column(
         children: [
           Padding(
@@ -88,44 +124,59 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: topicCtrl,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter topic',
-                      border: OutlineInputBorder(),
+                    controller: _topicCtrl,
+                    decoration: InputDecoration(
+                      hintText:
+                          _loading ? 'Generating…' : 'Enter topic',
+                      border: const OutlineInputBorder(),
                     ),
+                    onSubmitted: (_) => _generateSection(),
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: loading ? null : generateSection,
-                  child: loading
+                  onPressed: _loading ? null : _generateSection,
+                  child: _loading
                       ? const SizedBox(
                           height: 18,
                           width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child:
+                              CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Text('Generate'),
                 ),
               ],
             ),
           ),
-          if (error != null)
+
+          if (_error != null)
             Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(error!, style: const TextStyle(color: Colors.red)),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                _error!,
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
+
           Expanded(
-            child: ValueListenableBuilder(
-              valueListenable: sectionsBox.listenable(),
-              builder: (context, Box<NoteSection> box, _) {
+            child: ValueListenableBuilder<Box<AiNoteSection>>(
+              valueListenable: _sectionsBox.listenable(),
+              builder: (_, box, __) {
                 final sections = box.values
-                    .where((s) => s.noteId == widget.noteId)
+                    .where(
+                      (s) =>
+                          s.noteId == widget.noteId &&
+                          s.isDeleted == false,
+                    )
                     .toList()
                   ..sort(
-                      (a, b) => b.createdAt.compareTo(a.createdAt));
+                    (a, b) =>
+                        b.createdAt.compareTo(a.createdAt),
+                  );
 
                 if (sections.isEmpty) {
-                  return const Center(child: Text('No sections yet'));
+                  return const Center(
+                      child: Text('No sections yet'));
                 }
 
                 return ListView.builder(
@@ -134,21 +185,20 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     final section = sections[index];
                     return Card(
                       margin: const EdgeInsets.all(10),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              section.topic,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(section.content),
-                          ],
+                      child: ListTile(
+                        title: Text(
+                          section.topic,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(section.content),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () =>
+                              _deleteSection(section),
                         ),
                       ),
                     );

@@ -1,8 +1,8 @@
 import 'package:hive/hive.dart';
 
-part 'note_section_model.g.dart';
+part 'note_section.g.dart';
 
-@HiveType(typeId: 1)
+@HiveType(typeId: 3) // ⚠️ unique, never change later
 class NoteSection extends HiveObject {
   @HiveField(0)
   String id;
@@ -20,6 +20,9 @@ class NoteSection extends HiveObject {
   DateTime createdAt;
 
   @HiveField(5)
+  bool isDeleted;
+
+  @HiveField(6)
   bool isSynced;
 
   NoteSection({
@@ -28,6 +31,7 @@ class NoteSection extends HiveObject {
     required this.topic,
     required this.content,
     required this.createdAt,
+    this.isDeleted = false,
     this.isSynced = false,
   });
 }

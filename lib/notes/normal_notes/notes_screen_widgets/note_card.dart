@@ -2,15 +2,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:learnify/notes/normal_notes/change_notifier/new_note_controller.dart';
-import 'package:learnify/notes/normal_notes/change_notifier/notes_provider.dart';
-import 'package:learnify/notes/normal_notes/core/utils.dart';
-import 'package:learnify/notes/normal_notes/models/note.dart';
-import 'package:learnify/notes/normal_notes/notes_screen/new_or_edit_note_screen.dart';
 import 'package:learnify/notes/normal_notes/notes_screen_widgets/conformation_dialog.dart';
-import 'package:learnify/notes/normal_notes/notes_screen_widgets/dialog_card.dart';
-import 'package:learnify/notes/normal_notes/notes_screen_widgets/note_tag.dart';
 import 'package:provider/provider.dart';
+
+import '../change_notifier/new_note_controller.dart';
+import '../change_notifier/notes_provider.dart';
+import '../core/utils.dart';
+import '../models/note.dart';
+import '../notes_screen/new_or_edit_note_screen.dart';
+import '../notes_screen_widgets/dialog_card.dart';
+import '../notes_screen_widgets/note_tag.dart';
 
 class NoteCard extends StatelessWidget {
   const NoteCard({
@@ -24,9 +25,11 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final String plainText = _extractPlainText(note.contentJson);
 
-    return GestureDetector(
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
       onTap: () {
         Navigator.push(
           context,
@@ -40,15 +43,12 @@ class NoteCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: const Color.fromRGBO(110, 108, 107, 0.34),
-          border: Border.all(color: Colors.black54, width: 2),
+          color: theme.colorScheme.surface,
+          border: Border.all(
+            color: theme.colorScheme.onSurface.withOpacity(0.2),
+            width: 1.5,
+          ),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.white54,
-              offset: Offset(4, 4),
-            ),
-          ],
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -57,10 +57,8 @@ class NoteCard extends StatelessWidget {
             // ---------- TITLE ----------
             Text(
               note.title,
-              style: TextStyle(
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.grey.shade900,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -88,15 +86,13 @@ class NoteCard extends StatelessWidget {
                   ? Expanded(
                       child: Text(
                         plainText,
-                        style:
-                            TextStyle(color: Colors.grey.shade700),
+                        style: theme.textTheme.bodyMedium,
                         overflow: TextOverflow.fade,
                       ),
                     )
                   : Text(
                       plainText,
-                      style:
-                          TextStyle(color: Colors.grey.shade700),
+                      style: theme.textTheme.bodyMedium,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -108,30 +104,24 @@ class NoteCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    toShortDate(note.dateModified),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    toShortDate(note.updatedAt),
+                    style: theme.textTheme.bodySmall,
                   ),
                 ),
-                GestureDetector(
-                  onTap: () async {
-                    final shouldDelete =
-                        await showConfirmationDialog(context) ??
-                            false;
-                    if (shouldDelete && context.mounted) {
-                      context
-                          .read<NotesProvider>()
-                          .deleteNote(note);
-                    }
-                  },
-                  child: FaIcon(
+                IconButton(
+                  icon: const FaIcon(
                     FontAwesomeIcons.trash,
-                    color: Colors.grey.shade500,
                     size: 16,
                   ),
+                  color: theme.colorScheme.error,
+                  onPressed: () async {
+                    final shouldDelete =
+                        await showConfirmationDialog(context);
+
+                    if (shouldDelete && context.mounted) {
+                      context.read<NotesProvider>().deleteNote(note);
+                    }
+                  },
                 ),
               ],
             ),
@@ -153,10 +143,19 @@ class NoteCard extends StatelessWidget {
   }
 }
 
-Future<bool?> showConfirmationDialog(BuildContext context) {
-  return showDialog<bool>(
+// ================= DIALOG =================
+
+Future<bool> showConfirmationDialog(BuildContext context) async {
+  final result = await showDialog<bool>(
     context: context,
-    builder: (_) =>
-        const DialogCard(child: ConfirmationDialog()),
+    builder: (_) => const DialogCard(
+      child: ConfirmationDialog(
+        title: 'Delete this note permanently?',
+        confirmLabel: 'Delete',
+        cancelLabel: 'Cancel',
+      ),
+    ),
   );
+
+  return result ?? false;
 }

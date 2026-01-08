@@ -1,49 +1,40 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:learnify/notes/normal_notes/core/extension.dart';
-import 'package:learnify/notes/normal_notes/enums/order_option.dart';
-import 'package:learnify/notes/normal_notes/models/note.dart';
-import '../services/notes_firebase_service.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+import '../models/note.dart';
+import '../enums/order_option.dart';
+import '../core/extension.dart';
 
 class NotesProvider extends ChangeNotifier {
-  final NotesFirebaseService _firebaseService = NotesFirebaseService();
-
-  final List<Note> _notes = [];
-  StreamSubscription<List<Note>>? _subscription;
+  late final Box<Note> _notesBox;
 
   NotesProvider() {
-    _listenToNotes();
+    _notesBox = Hive.box<Note>('notesBox');
+    _notesBox.listenable().addListener(_onNotesChanged);
   }
 
-  // ================= FIREBASE LISTENER =================
-
-  void _listenToNotes() {
-    _subscription = _firebaseService.fetchNotes().listen(
-      (notes) {
-        _notes
-          ..clear()
-          ..addAll(notes);
-        notifyListeners();
-      },
-      onError: (error) {
-        debugPrint('Notes stream error: $error');
-      },
-    );
+  void _onNotesChanged() {
+    notifyListeners();
   }
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    _notesBox.listenable().removeListener(_onNotesChanged);
     super.dispose();
   }
 
-  // ================= GETTERS =================
+  // ================= RAW NOTES =================
+
+  List<Note> get _allNotes =>
+      _notesBox.values.where((n) => !n.isDeleted).toList();
+
+  // ================= FILTERED NOTES =================
 
   List<Note> get notes {
     final filtered =
-        _searchTerm.isEmpty ? _notes : _notes.where(_test).toList();
+        _searchTerm.isEmpty ? _allNotes : _allNotes.where(_test).toList();
     filtered.sort(_compare);
     return filtered;
   }
@@ -65,8 +56,12 @@ class NotesProvider extends ChangeNotifier {
 
   String _extractPlainText(String json) {
     try {
-      final doc = Document.fromJson(jsonDecode(json));
-      return doc.toPlainText().toLowerCase();
+      final decoded = jsonDecode(json);
+      if (decoded is List) {
+        final doc = Document.fromJson(decoded);
+        return doc.toPlainText().toLowerCase();
+      }
+      return '';
     } catch (_) {
       return '';
     }
@@ -75,33 +70,37 @@ class NotesProvider extends ChangeNotifier {
   // ================= SORT =================
 
   int _compare(Note a, Note b) {
-    return orderBy == OrderOption.dateModified
+    return orderBy == OrderOption.updatedAt
         ? _isDescending
-            ? b.dateModified.compareTo(a.dateModified)
-            : a.dateModified.compareTo(b.dateModified)
+            ? b.updatedAt.compareTo(a.updatedAt)
+            : a.updatedAt.compareTo(b.updatedAt)
         : _isDescending
-            ? b.dateCreated.compareTo(a.dateCreated)
-            : a.dateCreated.compareTo(b.dateCreated);
+            ? b.createdAt.compareTo(a.createdAt)
+            : a.createdAt.compareTo(b.createdAt);
   }
 
-  // ================= CRUD =================
-  // Firestore is the source of truth
+  // ================= CRUD (HIVE ONLY) =================
 
-  Future<void> addNote(Note note) {
-    return _firebaseService.addNote(note);
+  Future<void> addNote(Note note) async {
+    note.isSynced = false;
+    await _notesBox.put(note.id, note);
   }
 
-  Future<void> updateNote(Note note) {
-    return _firebaseService.updateNote(note);
+  Future<void> updateNote(Note note) async {
+    note.isSynced = false;
+    await note.save();
   }
 
-  Future<void> deleteNote(Note note) {
-    return _firebaseService.deleteNote(note.id);
+  Future<void> deleteNote(Note note) async {
+    note
+      ..isDeleted = true
+      ..isSynced = false;
+    await note.save();
   }
 
   // ================= VIEW OPTIONS =================
 
-  OrderOption _orderBy = OrderOption.dateModified;
+  OrderOption _orderBy = OrderOption.updatedAt;
   OrderOption get orderBy => _orderBy;
 
   set orderBy(OrderOption value) {

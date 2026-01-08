@@ -1,5 +1,10 @@
-
 extension ListDeepContains on List<String> {
-  bool deepContains(String term) =>
-      contains(term) || any((element) => element.contains(term));
+  bool deepContains(String term) {
+    final query = term.toLowerCase().trim();
+    if (query.isEmpty) return false;
+
+    return any(
+      (element) => element.toLowerCase().contains(query),
+    );
+  }
 }

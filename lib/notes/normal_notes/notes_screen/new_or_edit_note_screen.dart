@@ -57,19 +57,23 @@ class _NewOrEditNoteScreenState extends State<NewOrEditNoteScreen> {
   }
 
   Future<bool> _handleExit() async {
-    final shouldSave =
-        await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => DialogCard(child: ConfirmationDialog()),
-        ) ??
-        false;
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const DialogCard(
+        child: ConfirmationDialog(
+          title: 'Save changes before leaving?',
+          confirmLabel: 'Save',
+          cancelLabel: 'Discard',
+        ),
+      ),
+    );
 
-    if (shouldSave) {
-      newNoteController.saveNote(context);
+    if (shouldSave == true) {
+      await newNoteController.saveNote(context);
     }
 
-    return true;
+    return true; // allow pop after handling
   }
 
   @override

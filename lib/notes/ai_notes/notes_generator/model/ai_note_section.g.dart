@@ -1,47 +1,50 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'note.dart';
+part of 'ai_note_section.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class NoteAdapter extends TypeAdapter<Note> {
+class AiNoteSectionAdapter extends TypeAdapter<AiNoteSection> {
   @override
-  final int typeId = 0;
+  final int typeId = 2;
 
   @override
-  Note read(BinaryReader reader) {
+  AiNoteSection read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Note(
+    return AiNoteSection(
       id: fields[0] as String,
-      userId: fields[1] as String,
-      title: fields[2] as String,
-      createdAt: fields[3] as DateTime,
-      updatedAt: fields[4] as DateTime,
+      noteId: fields[1] as String,
+      topic: fields[2] as String,
+      content: fields[3] as String,
+      createdAt: fields[4] as DateTime,
       isSynced: fields[5] as bool,
+      isDeleted: fields[6] as bool,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Note obj) {
+  void write(BinaryWriter writer, AiNoteSection obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.userId)
+      ..write(obj.noteId)
       ..writeByte(2)
-      ..write(obj.title)
+      ..write(obj.topic)
       ..writeByte(3)
-      ..write(obj.createdAt)
+      ..write(obj.content)
       ..writeByte(4)
-      ..write(obj.updatedAt)
+      ..write(obj.createdAt)
       ..writeByte(5)
-      ..write(obj.isSynced);
+      ..write(obj.isSynced)
+      ..writeByte(6)
+      ..write(obj.isDeleted);
   }
 
   @override
@@ -50,7 +53,7 @@ class NoteAdapter extends TypeAdapter<Note> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is NoteAdapter &&
+      other is AiNoteSectionAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

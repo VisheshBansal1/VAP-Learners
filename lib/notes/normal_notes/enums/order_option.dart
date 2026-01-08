@@ -1,17 +1,11 @@
-
 enum OrderOption {
-  dateModified,
-  dateCreated;
+  updatedAt,
+  createdAt;
 
-  String get name {
+  String get label {
     return switch (this) {
-      OrderOption.dateModified => 'Modified Date',
-      OrderOption.dateCreated => 'Created Date',
+      OrderOption.updatedAt => 'Modified Date',
+      OrderOption.createdAt => 'Created Date',
     };
   }
 }
-
-
-
-
-

@@ -1,6 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:learnify/constants/colors.dart';
 import 'package:learnify/notes/normal_notes/change_notifier/new_note_controller.dart';
 import 'package:learnify/notes/normal_notes/change_notifier/notes_provider.dart';

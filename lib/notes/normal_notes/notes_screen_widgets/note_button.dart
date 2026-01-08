@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:learnify/constants/colors.dart';
 
 class NoteButton extends StatelessWidget {
   const NoteButton({
@@ -15,32 +14,41 @@ class NoteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            offset: Offset(2, 2),
-            color: isOutlined ? MyColors.mainColor : Colors.black,
-          ),
-        ],
-      ),
+    final theme = Theme.of(context);
 
-      child: ElevatedButton(
+    if (isOutlined) {
+      return OutlinedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          elevation: 8,
-          backgroundColor: isOutlined ? Colors.white : MyColors.mainColor,
-          foregroundColor: !isOutlined ? Colors.white : MyColors.mainColor,
-          side: BorderSide(
-            color: isOutlined ? MyColors.mainColor : Colors.black,
-          ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: theme.colorScheme.primary,
+          side: BorderSide(color: theme.colorScheme.primary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
         ),
         child: Text(label),
+      );
+    }
+
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
+      child: Text(label),
     );
   }
 }

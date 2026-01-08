@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:learnify/notes/normal_notes/change_notifier/new_note_controller.dart';
-import 'package:learnify/notes/normal_notes/core/utils.dart';
-import 'package:learnify/notes/normal_notes/models/note.dart';
-import 'package:learnify/notes/normal_notes/notes_screen_widgets/dialog_card.dart';
-import 'package:learnify/notes/normal_notes/notes_screen_widgets/new_tag_dialog.dart';
-import 'package:learnify/notes/normal_notes/notes_screen_widgets/note_tag.dart';
 import 'package:provider/provider.dart';
+
+import '../change_notifier/new_note_controller.dart';
+import '../core/utils.dart';
+import '../models/note.dart';
+import '../notes_screen_widgets/dialog_card.dart';
+import '../notes_screen_widgets/new_tag_dialog.dart';
+import '../notes_screen_widgets/note_tag.dart';
 
 class NotesMetadata extends StatefulWidget {
   const NotesMetadata({
@@ -36,9 +37,9 @@ class _NotesMetadataState extends State<NotesMetadata> {
       children: [
         // ---------- DATE INFO ----------
         if (widget.note != null) ...[
-          _dateRow('Last Modified', widget.note!.dateModified),
+          _dateRow('Last Modified', widget.note!.updatedAt),
           const SizedBox(height: 4),
-          _dateRow('Created', widget.note!.dateCreated),
+          _dateRow('Created', widget.note!.createdAt),
           const SizedBox(height: 8),
         ],
 
@@ -118,7 +119,7 @@ class _NotesMetadataState extends State<NotesMetadata> {
 
   // ================= HELPERS =================
 
-  Widget _dateRow(String label, int timestamp) {
+  Widget _dateRow(String label, DateTime date) {
     return Row(
       children: [
         Expanded(
@@ -134,7 +135,7 @@ class _NotesMetadataState extends State<NotesMetadata> {
         Expanded(
           flex: 5,
           child: Text(
-            toLongDate(timestamp),
+            toLongDate(date),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.grey,

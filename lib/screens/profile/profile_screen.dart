@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learnify/drawer/drawer_widget/header_section.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/services/notes_sync_service.dart';
+import 'package:learnify/notes/normal_notes/services/normal_note_sync_service.dart';
 import 'package:provider/provider.dart';
+
+import 'package:learnify/drawer/drawer_widget/header_section.dart';
+import 'package:learnify/notes/ai_notes/notes_generator/services/ai_notes_sync_service.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/conformation_dialog.dart';
+import 'package:learnify/notes/normal_notes/notes_screen_widgets/dialog_card.dart';
 
 import 'package:learnify/auth/user/screens/login_screen.dart';
 import 'package:learnify/screens/profile/profile_screen_widget/info_card.dart';
@@ -54,7 +58,7 @@ class ProfileScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              /// 🔥 HEADER
+              // ================= HEADER =================
               HeaderSection(
                 name: name,
                 email: email,
@@ -73,7 +77,7 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              /// 🔥 INFO CARDS
+              // ================= INFO =================
               Row(
                 children: [
                   Expanded(
@@ -97,20 +101,17 @@ class ProfileScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-
-              /// 🔥 PROGRESS
               const CurrentUserProgress(),
 
               const SizedBox(height: 30),
 
-              /// 🔥 SETTINGS
+              // ================= SETTINGS =================
               const Text(
                 "Settings",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
 
-              /// 🎨 THEME (Hive)
               MenuItemTile(
                 icon: Icons.palette,
                 title: "Theme",
@@ -118,7 +119,6 @@ class ProfileScreen extends StatelessWidget {
                 onTap: () => _showThemeSheet(context),
               ),
 
-              /// 🌐 LANGUAGE (Firestore)
               MenuItemTile(
                 icon: Icons.language,
                 title: "Language",
@@ -130,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
                   );
 
                   if (selected != null) {
-                    FirebaseFirestore.instance
+                    await FirebaseFirestore.instance
                         .collection('users')
                         .doc(user.uid)
                         .update({'language': selected});
@@ -138,7 +138,6 @@ class ProfileScreen extends StatelessWidget {
                 },
               ),
 
-              /// 🎓 CERTIFICATES
               MenuItemTile(
                 icon: Icons.card_membership,
                 title: "My Certificates",
@@ -154,68 +153,98 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 30),
 
-              const SizedBox(height: 30),
-
-              /// 🔥 NOTES SYNC
+              // ================= NOTES SYNC =================
               const Text(
                 "Notes",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
 
-              /// ☁️ BACKUP NOTES
+              // ---------- BACKUP AI NOTES ----------
               MenuItemTile(
                 icon: Icons.cloud_upload,
                 title: "Backup notes to cloud",
                 onTap: () async {
-                  final confirm = await _confirmDialog(
-                    context,
-                    title: "Backup Notes",
-                    message:
-                        "This will upload all unsynced notes to the cloud. Continue?",
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => const DialogCard(
+                      child: ConfirmationDialog(
+                        title:
+                            "Backup notes to cloud?\n\nYour local notes and sections will be uploaded.",
+                        confirmLabel: "Backup",
+                        cancelLabel: "Cancel",
+                      ),
+                    ),
                   );
 
-                  if (confirm) {
-                    _showLoading(context);
-                    try {
-                      await NotesSyncService.backupToCloud();
-                      Navigator.pop(context); // close loader
-                      _showSnack(context, "Notes backed up successfully");
-                    } catch (e) {
-                      Navigator.pop(context);
-                      _showSnack(context, "Backup failed");
+                  if (confirm != true || !context.mounted) return;
+
+                  _showLoading(context);
+
+                  try {
+                    await AiNotesSyncService.backupToCloud();
+                    await NormalNotesSyncService.backupToCloud();
+
+                    if (!context.mounted) return;
+                    _showSnack(context, "Notes backed up successfully");
+                  } catch (e, stack) {
+                    // 🔥 THIS IS IMPORTANT
+                    debugPrint("BACKUP ERROR: $e");
+                    debugPrintStack(stackTrace: stack);
+
+                    if (!context.mounted) return;
+                    _showSnack(context, "Backup failed. Check logs.");
+                  } finally {
+                    if (context.mounted) {
+                      Navigator.of(context, rootNavigator: true).pop();
                     }
                   }
                 },
               ),
 
-              /// 🔄 RESTORE NOTES
+              // ---------- RESTORE AI NOTES ----------
               MenuItemTile(
                 icon: Icons.cloud_download,
                 title: "Restore notes from cloud",
                 onTap: () async {
-                  final confirm = await _confirmDialog(
-                    context,
-                    title: "Restore Notes",
-                    message:
-                        "This will DELETE all local notes and restore from cloud. Continue?",
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => const DialogCard(
+                      child: ConfirmationDialog(
+                        title:
+                            "Restore notes from cloud?\n\nNotes will be merged.\nSections will be restored from cloud.",
+                        confirmLabel: "Restore",
+                        cancelLabel: "Cancel",
+                      ),
+                    ),
                   );
 
-                  if (confirm) {
-                    _showLoading(context);
-                    try {
-                      await NotesSyncService.restoreFromCloud();
-                      Navigator.pop(context);
-                      _showSnack(context, "Notes restored successfully");
-                    } catch (e) {
-                      Navigator.pop(context);
-                      _showSnack(context, "Restore failed");
+                  if (confirm != true || !context.mounted) return;
+
+                  _showLoading(context);
+
+                  try {
+                    await AiNotesSyncService.restoreFromCloud();
+                    await NormalNotesSyncService.restoreFromCloud();
+
+                    if (!context.mounted) return;
+                    _showSnack(context, "Notes restored successfully");
+                  } catch (e, stack) {
+                    // 🔥 SEE THE REAL ISSUE
+                    debugPrint("RESTORE ERROR: $e");
+                    debugPrintStack(stackTrace: stack);
+
+                    if (!context.mounted) return;
+                    _showSnack(context, "Restore failed. Check logs.");
+                  } finally {
+                    if (context.mounted) {
+                      Navigator.of(context, rootNavigator: true).pop();
                     }
                   }
                 },
               ),
 
-              /// 🚪 LOGOUT
+              // ================= LOGOUT =================
               LogoutTile(
                 onTap: () async {
                   await FirebaseAuth.instance.signOut();
@@ -233,7 +262,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ---------------- THEME CHOOSER ----------------
+  // ================= THEME SHEET =================
 
   void _showThemeSheet(BuildContext context) {
     final theme = context.read<ThemeController>();
@@ -260,30 +289,7 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-Future<bool> _confirmDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-}) async {
-  return await showDialog<bool>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text("Continue"),
-            ),
-          ],
-        ),
-      ) ??
-      false;
-}
+// ================= HELPERS =================
 
 void _showLoading(BuildContext context) {
   showDialog(

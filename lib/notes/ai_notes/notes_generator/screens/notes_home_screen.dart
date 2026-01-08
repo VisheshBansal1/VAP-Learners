@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/model/note.dart';
+
+import 'package:learnify/notes/ai_notes/notes_generator/model/ai_note.dart';
 
 import 'create_note_screen.dart';
 import 'note_detail_screen.dart';
@@ -10,28 +11,39 @@ class NotesHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notesBox = Hive.box<Note>('notesBox');
+    final Box<AiNote> aiNotesBox = Hive.box<AiNote>('aiNotesBox');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Notes')),
+      appBar: AppBar(title: const Text('AI Notes')),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const CreateNoteScreen()),
+            MaterialPageRoute(
+              builder: (_) => const CreateNoteScreen(),
+            ),
           );
         },
         child: const Icon(Icons.add),
       ),
       body: ValueListenableBuilder(
-        valueListenable: notesBox.listenable(),
-        builder: (context, Box<Note> box, _) {
-          if (box.isEmpty) {
-            return const Center(child: Text('No notes yet'));
-          }
+        valueListenable: aiNotesBox.listenable(),
+        builder: (context, Box<AiNote> box, _) {
+          final notes = box.values
+              .where((n) => n.isDeleted == false)
+              .toList()
+            ..sort(
+              (a, b) => b.updatedAt.compareTo(a.updatedAt),
+            );
 
-          final notes = box.values.toList()
-            ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          if (notes.isEmpty) {
+            return const Center(
+              child: Text(
+                'No AI notes yet.\nTap + to create one.',
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
 
           return ListView.builder(
             itemCount: notes.length,
@@ -40,12 +52,34 @@ class NotesHomeScreen extends StatelessWidget {
 
               return ListTile(
                 title: Text(note.title),
-                trailing: Icon(
-                  note.isSynced ? Icons.cloud_done : Icons.cloud_off,
-                  size: 18,
-                  color: note.isSynced ? Colors.green : Colors.grey,
+                subtitle: Text(
+                  note.isSynced ? 'Synced' : 'Not synced',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: note.isSynced
+                        ? Colors.green
+                        : Colors.grey,
+                  ),
+                ),
+                trailing: PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'delete') {
+                      note
+                        ..isDeleted = true
+                        ..isSynced = false;
+                      await note.save();
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text('Delete'),
+                    ),
+                  ],
                 ),
                 onTap: () {
+                  if (note.isDeleted) return;
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(

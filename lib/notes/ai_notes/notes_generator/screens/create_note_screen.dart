@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:learnify/notes/ai_notes/notes_generator/model/note.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:learnify/notes/ai_notes/notes_generator/model/ai_note.dart';
 
 class CreateNoteScreen extends StatefulWidget {
   const CreateNoteScreen({super.key});
@@ -13,67 +13,89 @@ class CreateNoteScreen extends StatefulWidget {
 }
 
 class _CreateNoteScreenState extends State<CreateNoteScreen> {
-  final TextEditingController titleCtrl = TextEditingController();
-  bool isSaving = false;
+  final TextEditingController _titleCtrl = TextEditingController();
+  bool _isSaving = false;
 
-  Future<void> createNote() async {
-    final title = titleCtrl.text.trim();
-    if (title.isEmpty || isSaving) return;
+  Future<void> _createNote() async {
+    if (_isSaving) return;
 
-    setState(() => isSaving = true);
+    final title = _titleCtrl.text.trim();
+    if (title.isEmpty) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showError('User not logged in');
+      return;
+    }
+
+    setState(() => _isSaving = true);
 
     try {
-      final uid = FirebaseAuth.instance.currentUser!.uid;
-      final notesBox = Hive.box<Note>('notesBox');
+      final notesBox = Hive.box<AiNote>('aiNotesBox');
+      final now = DateTime.now();
 
-      final note = Note(
-        id: const Uuid().v4(),
-        userId: uid,
+      final aiNote = AiNote(
+        id: const Uuid().v4(), // Firestore ID
+        userId: user.uid,
         title: title,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        createdAt: now,
+        updatedAt: now,
         isSynced: false,
+        isDeleted: false,
       );
 
-      await notesBox.put(note.id, note);
+      // Hive key = same as Firestore ID
+      await notesBox.put(aiNote.id, aiNote);
+
+      if (!mounted) return;
       Navigator.pop(context);
+    } catch (e) {
+      _showError('Failed to create note');
     } finally {
-      if (mounted) setState(() => isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   @override
   void dispose() {
-    titleCtrl.dispose();
+    _titleCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Note')),
+      appBar: AppBar(title: const Text('New AI Note')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
-              controller: titleCtrl,
+              controller: _titleCtrl,
+              autofocus: true,
               textInputAction: TextInputAction.done,
               decoration: const InputDecoration(
                 hintText: 'Note title',
                 border: OutlineInputBorder(),
               ),
-              onSubmitted: (_) => createNote(),
+              onSubmitted: (_) => _createNote(),
             ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: ElevatedButton(
-                onPressed: isSaving ? null : createNote,
-                child: isSaving
+                onPressed: _isSaving ? null : _createNote,
+                child: _isSaving
                     ? const SizedBox(
-                        height: 18,
-                        width: 18,
+                        height: 20,
+                        width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Text('Create'),

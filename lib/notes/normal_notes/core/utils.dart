@@ -1,9 +1,9 @@
 import 'package:intl/intl.dart';
 
-String toShortDate(int dateTime) => DateFormat(
-  'dd MMM, y',
-).format(DateTime.fromMicrosecondsSinceEpoch(dateTime));
+String toShortDate(DateTime dateTime) {
+  return DateFormat('dd MMM, y').format(dateTime);
+}
 
-String toLongDate(int dateTime) => DateFormat(
-  'dd MMMM y, hh:mm a',
-).format(DateTime.fromMicrosecondsSinceEpoch(dateTime));
+String toLongDate(DateTime dateTime) {
+  return DateFormat('dd MMMM y, hh:mm a').format(dateTime);
+}

@@ -1,62 +1,69 @@
-class Note {
-  final String id; // Firestore document ID
-  final String title;
-  final String contentJson; // Quill Delta JSON (String)
-  final int dateCreated; // millisecondsSinceEpoch
-  final int dateModified; // millisecondsSinceEpoch
-  final List<String> tags;
+import 'package:hive/hive.dart';
+
+part 'note.g.dart';
+
+@HiveType(typeId: 0)
+class Note extends HiveObject {
+  @HiveField(0)
+  String id;
+
+  @HiveField(1)
+  String userId;
+
+  @HiveField(2)
+  String title;
+
+  // Quill delta JSON
+  @HiveField(3)
+  String contentJson;
+
+  @HiveField(4)
+  DateTime createdAt;
+
+  @HiveField(5)
+  DateTime updatedAt;
+
+  @HiveField(6)
+  List<String> tags;
+
+  @HiveField(7)
+  bool isSynced;
+
+  @HiveField(8)
+  bool isDeleted; // ⭐ REQUIRED for sync
 
   Note({
     required this.id,
+    required this.userId,
     required this.title,
     required this.contentJson,
-    required this.dateCreated,
-    required this.dateModified,
-    required this.tags,
+    required this.createdAt,
+    required this.updatedAt,
+    this.tags = const [],
+    this.isSynced = false,
+    this.isDeleted = false,
   });
 
-  // ================= FIRESTORE → MODEL =================
-  factory Note.fromJson(
-    Map<String, dynamic> json,
-    String id,
-  ) {
-    return Note(
-      id: id,
-      title: json['title'] ?? '',
-      contentJson: json['contentJson'] ?? '',
-      dateCreated: json['dateCreated'] ?? 0,
-      dateModified: json['dateModified'] ?? 0,
-      tags: json['tags'] != null
-          ? List<String>.from(json['tags'])
-          : <String>[],
-    );
-  }
-
-  // ================= MODEL → FIRESTORE =================
-  Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'contentJson': contentJson,
-      'dateCreated': dateCreated,
-      'dateModified': dateModified,
-      'tags': tags,
-    };
-  }
-
   // ================= HELPERS =================
+
   Note copyWith({
     String? title,
     String? contentJson,
-    int? dateModified,
+    DateTime? updatedAt,
     List<String>? tags,
+    bool? isSynced,
+    bool? isDeleted,
   }) {
     return Note(
       id: id,
+      userId: userId,
       title: title ?? this.title,
       contentJson: contentJson ?? this.contentJson,
-      dateCreated: dateCreated,
-      dateModified: dateModified ?? this.dateModified,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       tags: tags ?? this.tags,
+      isSynced: isSynced ?? this.isSynced,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 }
