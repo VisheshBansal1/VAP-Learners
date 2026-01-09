@@ -12,8 +12,6 @@ class ViewOptions extends StatefulWidget {
 }
 
 class _ViewOptionsState extends State<ViewOptions> {
- 
-
   @override
   Widget build(BuildContext context) {
     return Consumer<NotesProvider>(
@@ -23,7 +21,10 @@ class _ViewOptionsState extends State<ViewOptions> {
           children: [
             IconButton(
               onPressed: () {
-                setState(() => notesProvider.isDescending = !notesProvider.isDescending);
+                setState(
+                  () =>
+                      notesProvider.isDescending = !notesProvider.isDescending,
+                );
               },
               icon: FaIcon(
                 notesProvider.isDescending
@@ -36,7 +37,7 @@ class _ViewOptionsState extends State<ViewOptions> {
               visualDensity: VisualDensity.compact,
               constraints: const BoxConstraints(),
             ),
-            const SizedBox(width: 16), 
+            const SizedBox(width: 16),
             DropdownButton<OrderOption>(
               value: notesProvider.orderBy,
               icon: const FaIcon(
@@ -60,7 +61,8 @@ class _ViewOptionsState extends State<ViewOptions> {
                   ),
                 );
               }).toList(),
-              selectedItemBuilder: (context) => OrderOption.values.map((e) => Text(e.name)).toList(),
+              selectedItemBuilder: (context) =>
+                  OrderOption.values.map((e) => Text(e.name)).toList(),
               onChanged: (newValue) =>
                   setState(() => notesProvider.orderBy = newValue!),
             ),
@@ -75,6 +77,7 @@ class _ViewOptionsState extends State<ViewOptions> {
                 notesProvider.isGrid
                     ? FontAwesomeIcons.tableCellsLarge
                     : FontAwesomeIcons.bars,
+                color: Colors.blueGrey,
               ),
             ),
           ],

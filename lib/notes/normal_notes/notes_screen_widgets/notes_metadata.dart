@@ -128,7 +128,7 @@ class _NotesMetadataState extends State<NotesMetadata> {
             label,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
+              color: Colors.yellow,
             ),
           ),
         ),

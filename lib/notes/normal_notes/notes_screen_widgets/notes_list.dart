@@ -10,12 +10,15 @@ class NotesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
+      padding: const EdgeInsets.all(12),
       itemCount: notes.length,
-      clipBehavior: Clip.none,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
-        return NoteCard(isInGrid: false, note: notes[index],);
+        return NoteCard(
+          note: notes[index],
+          isInGrid: false,
+        );
       },
-      separatorBuilder: (context, index) => SizedBox(height: 5),
     );
   }
 }

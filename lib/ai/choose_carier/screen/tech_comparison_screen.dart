@@ -80,158 +80,169 @@ class _TechComparisonScreenState extends State<TechComparisonScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final suggestedTech =
-        selectedGoal != null ? goalTechMap[selectedGoal!] ?? [] : [];
+Widget build(BuildContext context) {
+  final suggestedTech =
+      selectedGoal != null ? goalTechMap[selectedGoal!] ?? [] : [];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Career Technology Comparison'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// GOAL INPUT (OPTIONAL)
-            TextField(
-              controller: goalCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Career goal (optional)',
-                hintText:
-                    'e.g. Blockchain Developer, Cloud Security Engineer',
-                border: OutlineInputBorder(),
-              ),
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Career Technology Comparison'),
+    ),
+    body: SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// GOAL INPUT
+          TextField(
+            controller: goalCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Career goal (optional)',
+              hintText:
+                  'e.g. Blockchain Developer, Cloud Security Engineer',
+              border: OutlineInputBorder(),
             ),
+          ),
 
-            const SizedBox(height: 12),
+          const SizedBox(height: 12),
 
-            /// DOMAIN SUGGESTION (OPTIONAL)
-            DropdownButtonFormField<String>(
-              value: selectedGoal,
-              hint: const Text('Or choose a suggested field'),
-              items: careerGoals
-                  .map(
-                    (g) => DropdownMenuItem(
-                      value: g,
-                      child: Text(g),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (v) {
-                setState(() => selectedGoal = v);
-              },
-              decoration:
-                  const InputDecoration(border: OutlineInputBorder()),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// SUGGESTED TECH
-            if (suggestedTech.isNotEmpty) ...[
-              Text(
-                'Suggested Technologies',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: suggestedTech.map((t) {
-                  final selected = selectedTech.contains(t);
-                  return FilterChip(
-                    label: Text(t),
-                    selected: selected,
-                    onSelected: (v) {
-                      setState(() {
-                        v
-                            ? selectedTech.add(t)
-                            : selectedTech.remove(t);
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            /// CUSTOM TECH INPUT
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: customTechCtrl,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'Add any technology (Rust, SAP, Solidity)',
-                      border: OutlineInputBorder(),
-                    ),
+          /// DOMAIN SUGGESTION
+          DropdownButtonFormField<String>(
+            value: selectedGoal,
+            hint: const Text('Or choose a suggested field'),
+            items: careerGoals
+                .map(
+                  (g) => DropdownMenuItem(
+                    value: g,
+                    child: Text(g),
                   ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    final tech =
-                        customTechCtrl.text.trim();
-                    if (tech.isEmpty) return;
+                )
+                .toList(),
+            onChanged: (v) => setState(() => selectedGoal = v),
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          /// SUGGESTED TECH
+          if (suggestedTech.isNotEmpty) ...[
+            Text(
+              'Suggested Technologies',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: suggestedTech.map((t) {
+                final selected = selectedTech.contains(t);
+                return FilterChip(
+                  label: Text(t),
+                  selected: selected,
+                  onSelected: (v) {
                     setState(() {
-                      selectedTech.add(tech);
-                      customTechCtrl.clear();
+                      v
+                          ? selectedTech.add(t)
+                          : selectedTech.remove(t);
                     });
                   },
-                  child: const Text('Add'),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            /// SELECTED TECH PREVIEW
-            Wrap(
-              spacing: 6,
-              children: selectedTech.map((t) {
-                return Chip(
-                  label: Text(t),
-                  onDeleted: () =>
-                      setState(() => selectedTech.remove(t)),
                 );
               }).toList(),
             ),
-
-            const SizedBox(height: 16),
-
-            /// ACTION BUTTON
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: loading ? null : compare,
-                child: loading
-                    ? const CircularProgressIndicator()
-                    : const Text('Compare & Get Guidance'),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// RESULTS
-            Expanded(
-              child: results.isEmpty
-                  ? const Center(
-                      child: Text('Results will appear here'),
-                    )
-                  : ListView(
-                      children: results.map((t) {
-                        return GestureDetector(
-                          onTap: () => _openDetailSheet(t),
-                          child: _buildResultCard(t),
-                        );
-                      }).toList(),
-                    ),
-            ),
+            const SizedBox(height: 12),
           ],
-        ),
+
+          /// CUSTOM TECH INPUT
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: customTechCtrl,
+                  decoration: const InputDecoration(
+                    hintText:
+                        'Add any technology (Rust, SAP, Solidity)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () {
+                  final tech = customTechCtrl.text.trim();
+                  if (tech.isEmpty) return;
+                  setState(() {
+                    selectedTech.add(tech);
+                    customTechCtrl.clear();
+                  });
+                },
+                child: const Text('Add'),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          /// SELECTED TECH PREVIEW
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: selectedTech.map((t) {
+              return Chip(
+                label: Text(t),
+                onDeleted: () =>
+                    setState(() => selectedTech.remove(t)),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 16),
+
+          /// ACTION BUTTON
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: loading ? null : compare,
+              child: loading
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Compare & Get Guidance'),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          /// RESULTS
+          if (results.isEmpty)
+            const Center(
+              child: Text('Results will appear here'),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: results.length,
+              itemBuilder: (_, index) {
+                final t = results[index];
+                return GestureDetector(
+                  onTap: () => _openDetailSheet(t),
+                  child: _buildResultCard(t),
+                );
+              },
+            ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   /// SUMMARY CARD
   Widget _buildResultCard(TechComparison t) {

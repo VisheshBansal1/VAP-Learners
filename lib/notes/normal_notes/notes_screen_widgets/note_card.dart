@@ -14,11 +14,7 @@ import '../notes_screen_widgets/dialog_card.dart';
 import '../notes_screen_widgets/note_tag.dart';
 
 class NoteCard extends StatelessWidget {
-  const NoteCard({
-    super.key,
-    required this.isInGrid,
-    required this.note,
-  });
+  const NoteCard({super.key, required this.isInGrid, required this.note});
 
   final Note note;
   final bool isInGrid;
@@ -43,7 +39,7 @@ class NoteCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
+          color: Color(0xFF1E293B),
           border: Border.all(
             color: theme.colorScheme.onSurface.withOpacity(0.2),
             width: 1.5,
@@ -109,14 +105,10 @@ class NoteCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const FaIcon(
-                    FontAwesomeIcons.trash,
-                    size: 16,
-                  ),
+                  icon: const FaIcon(FontAwesomeIcons.trash, size: 16),
                   color: theme.colorScheme.error,
                   onPressed: () async {
-                    final shouldDelete =
-                        await showConfirmationDialog(context);
+                    final shouldDelete = await showConfirmationDialog(context);
 
                     if (shouldDelete && context.mounted) {
                       context.read<NotesProvider>().deleteNote(note);

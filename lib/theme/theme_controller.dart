@@ -4,10 +4,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 enum AppThemeMode { light, dark, system }
 
 class ThemeController extends ChangeNotifier {
-  static const _boxName = 'themeBox';
-  static const _key = 'themeMode';
+  static const String _boxName = 'themeBox';
+  static const String _key = 'themeMode';
 
-  late final Box _box;
+  late Box<int> _box;
 
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
@@ -15,17 +15,23 @@ class ThemeController extends ChangeNotifier {
   // ================= INIT =================
 
   Future<void> init() async {
-    _box = await Hive.openBox(_boxName);
+    _box = await Hive.openBox<int>(_boxName);
 
-    final stored = _box.get(_key);
-    _themeMode = _mapStoredValue(stored);
+    final storedIndex = _box.get(_key);
+    _themeMode = _mapStoredValue(storedIndex);
+
+    // 🔥 IMPORTANT: update UI on app start
+    notifyListeners();
   }
 
   // ================= SET THEME =================
 
   void setTheme(AppThemeMode mode) {
+    if (!_box.isOpen) return; // safety guard
+
     _themeMode = _mapToThemeMode(mode);
-    _box.put(_key, mode.index); // 🔥 store enum index
+    _box.put(_key, mode.index); // storing enum index
+
     notifyListeners();
   }
 
@@ -57,11 +63,11 @@ class ThemeController extends ChangeNotifier {
     }
   }
 
-  ThemeMode _mapStoredValue(dynamic value) {
-    if (value is int &&
-        value >= 0 &&
-        value < AppThemeMode.values.length) {
-      return _mapToThemeMode(AppThemeMode.values[value]);
+  ThemeMode _mapStoredValue(int? index) {
+    if (index != null &&
+        index >= 0 &&
+        index < AppThemeMode.values.length) {
+      return _mapToThemeMode(AppThemeMode.values[index]);
     }
     return ThemeMode.system; // safe fallback
   }

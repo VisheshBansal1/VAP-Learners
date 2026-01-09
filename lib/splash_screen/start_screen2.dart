@@ -76,7 +76,7 @@ class StartScreen2 extends StatelessWidget {
             SizedBox(height: 10),
             Container(
               width: double.infinity,
-              height: 35,
+              height: 45,
               margin: EdgeInsets.symmetric(horizontal: 20),
               child: ElevatedButton(
                 onPressed: () {

@@ -11,31 +11,18 @@ import 'package:learnify/notes/normal_notes/notes_screen_widgets/seach_field.dar
 import 'package:learnify/notes/normal_notes/notes_screen_widgets/view_options.dart';
 import 'package:provider/provider.dart';
 
-class NotesMainScreen extends StatefulWidget {
+class NotesMainScreen extends StatelessWidget {
   const NotesMainScreen({super.key});
-
-  @override
-  State<NotesMainScreen> createState() => _NotesMainScreenState();
-}
-
-class _NotesMainScreenState extends State<NotesMainScreen> {
-  final List<String> dropDownOption = ["Date modified", "Date Created"];
-
-  late String dropDownValue = dropDownOption.first;
-  bool isDecending = true;
-  bool isGrid = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
         ),
         title: Text(
           'Notes Noter📝',
@@ -51,59 +38,59 @@ class _NotesMainScreenState extends State<NotesMainScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) {
-                return ChangeNotifierProvider(
-                  create: (_) => NewNoteController(),
-                  child: const NewOrEditNoteScreen(isNewNote: true),
-                );
-              },
+              builder: (_) => ChangeNotifierProvider(
+                create: (_) => NewNoteController(),
+                child: const NewOrEditNoteScreen(isNewNote: true),
+              ),
             ),
           );
         },
       ),
       body: Consumer<NotesProvider>(
-        builder: (context, notesProvider, child) {
+        builder: (context, notesProvider, _) {
           final List<Note> notes = notesProvider.notes;
 
-          return notes.isEmpty && notesProvider.searchTerm.isEmpty
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('assets/images/image.png', height: 370),
-                    const Text(
-                      'No notes yet',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black
+          if (notes.isEmpty && notesProvider.searchTerm.isEmpty) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/images/image.png', height: 370),
+                const Text(
+                  'No notes yet',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                const SearchField(),
+                if (notes.isNotEmpty) ...[
+                  const ViewOptions(),
+                  Expanded(
+                    child: notesProvider.isGrid
+                        ? NotesGrid(notes: notes)
+                        : NotesList(notes: notes),
+                  ),
+                ] else
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        'No Notes found for your Search Query!',
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ],
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      const SearchField(),
-                      if (notes.isNotEmpty) ...[
-                        const ViewOptions(),
-                        Expanded(
-                          child: isGrid
-                              ? NotesGrid(notes: notes)
-                              : NotesList(notes: notes),
-                        ),
-                      ] else
-                        const Expanded(
-                          child: Center(
-                            child: Text(
-                              'No Notes found for your Search Query!',
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
                   ),
-                );
+              ],
+            ),
+          );
         },
       ),
     );

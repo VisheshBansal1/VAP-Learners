@@ -10,14 +10,19 @@ class NotesGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
+      padding: const EdgeInsets.all(12),
       itemCount: notes.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 4,
-        mainAxisSpacing: 4,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.9,
       ),
       itemBuilder: (context, index) {
-        return NoteCard(isInGrid: true, note: notes[index],);
+        return NoteCard(
+          note: notes[index],
+          isInGrid: true,
+        );
       },
     );
   }

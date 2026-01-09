@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const _primary = Color(0xFF6C63FF);
-  static const _darkBg = Color(0xFF151022);
+  // ================= COLORS =================
+
+  // Primary (calm, premium, not flashy)
+  static const Color _primary = Color(0xFF4F46E5); // Indigo
+  static const Color _primarySoft = Color(0xFF6366F1);
+
+  // Light theme
+  static const Color _lightBg = Color(0xFFF9FAFB);
+  static const Color _lightSurface = Colors.white;
+  static const Color _lightText = Color(0xFF111827);
+
+  // Dark theme
+  static const Color _darkBg = Color(0xFF0F172A);
+  static const Color _darkSurface = Color(0xFF1E293B);
+  static const Color _darkText = Colors.white70;
 
   // ================= LIGHT THEME =================
 
@@ -10,34 +23,37 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.light,
 
-    colorScheme: ColorScheme.light(
+    colorScheme: const ColorScheme.light(
       primary: _primary,
-      secondary: _primary.withOpacity(0.8),
-      surface: Colors.white,
-      background: Colors.white,
+      secondary: _primarySoft,
+      background: _lightBg,
+      surface: _lightSurface,
       onPrimary: Colors.white,
-      onSurface: Colors.black87,
-      onBackground: Colors.black87,
+      onBackground: _lightText,
+      onSurface: _lightText,
     ),
 
-    scaffoldBackgroundColor: Colors.white,
+    scaffoldBackgroundColor: _lightBg,
 
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
-      foregroundColor: Colors.black,
+      foregroundColor: _lightText,
       elevation: 0,
       centerTitle: true,
     ),
 
     cardTheme: CardThemeData(
-      color: const Color(0xFF1E1A2E),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: _lightSurface,
+      elevation: 2,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
     ),
 
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.grey.shade100,
+      fillColor: const Color(0xFFF3F4F6),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -48,7 +64,10 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: _primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     ),
 
@@ -59,7 +78,7 @@ class AppTheme {
 
     switchTheme: SwitchThemeData(
       thumbColor: MaterialStateProperty.all(_primary),
-      trackColor: MaterialStateProperty.all(_primary.withOpacity(0.4)),
+      trackColor: MaterialStateProperty.all(_primary.withOpacity(0.35)),
     ),
   );
 
@@ -69,14 +88,14 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
 
-    colorScheme: ColorScheme.dark(
-      primary: _primary,
-      secondary: _primary.withOpacity(0.8),
+    colorScheme: const ColorScheme.dark(
+      primary: _primarySoft,
+      secondary: _primary,
       background: _darkBg,
-      surface: const Color(0xFF1E1A2E),
+      surface: _darkSurface,
       onPrimary: Colors.white,
-      onSurface: Colors.white70,
-      onBackground: Colors.white70,
+      onBackground: _darkText,
+      onSurface: _darkText,
     ),
 
     scaffoldBackgroundColor: _darkBg,
@@ -89,14 +108,16 @@ class AppTheme {
     ),
 
     cardTheme: CardThemeData(
-      color: const Color(0xFF1E1A2E),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: _darkSurface,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
     ),
 
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF1E1A2E),
+      fillColor: _darkSurface,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -105,20 +126,23 @@ class AppTheme {
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: _primary,
+        backgroundColor: _primarySoft,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     ),
 
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: _primary,
+      backgroundColor: _primarySoft,
       foregroundColor: Colors.white,
     ),
 
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.all(_primary),
-      trackColor: MaterialStateProperty.all(_primary.withOpacity(0.4)),
+      thumbColor: MaterialStateProperty.all(_primarySoft),
+      trackColor: MaterialStateProperty.all(_primarySoft.withOpacity(0.4)),
     ),
   );
 }
